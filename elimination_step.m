@@ -265,7 +265,7 @@ function elimination_step_J(decomp, primes, twist : bdiv3 := false)
 									aq2 := LtoM(aqfnew_list[2]);
 
 									nextprodq1 := Gcd([Integers()!Norm(tr1^2 - aq1^2),Integers()!Norm(tr2^2 - aq2^2)]);
-									nextprodq2 := Gcd([Integers()!Norm(tr1^2 - aq2^2),Integers()!Norm(tr2^2 - aq1^2)])
+									nextprodq2 := Gcd([Integers()!Norm(tr1^2 - aq2^2),Integers()!Norm(tr2^2 - aq1^2)]);
 									nextprodq := nextprodq1 * nextprodq2;
 								end if;
 
