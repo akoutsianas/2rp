@@ -13,10 +13,7 @@
 **              the elimination step for the equation 
 **                 -5x^2 + y^5 = z^{2p},
 **              under the assumption that solutions (a,b,c)
-**              satisfy either
-**                 (*) 2 | c or 
-**                 (*) 3 | b and 2 | a (the latter is automatic
-**                     if 2 does not divide c).
+**              satisfy 2 | a and 3 | b
 **
 **              Specifically, we aim to find an upper bound for 
 **              the exponent p by computing the possible traces 
@@ -29,33 +26,6 @@
 **          available online in arxiv.
 **
 **************************************************/
-
-/*******************************************************
-****************** SETUP PARAMETERS ********************
-*******************************************************/
-
-/* We define some parameters that will be common for all functions 
-   in this module. */
-   
-/* We define the ring RQ[z] of polynomials over the rationals*/
-
-RQ<z> := PolynomialRing(Rationals());
-
-
-/* We define the number field K = Q(zeta_5 + zeta_5^-1) and its
-   ring of integers OK. Since the two ideals over 2 and over 5
-   will be used throughout, we also define them.   */
-
-K<u> := NumberField(z^2 - z - 1);
-OK := RingOfIntegers(K);
-q2 := Factorization(2*OK)[1,1];
-q5 := Factorization(5*OK)[1,1];
-
-
-/* Finally, we define the ring of polynomials over the number 
-   field K. */
-
-RK<x> := PolynomialRing(K);
 
 
 /*******************************************************
@@ -79,10 +49,12 @@ RK<x> := PolynomialRing(K);
 **         of the Jacobian of the curve over K.
 ******************************************************/
 
-function get_traceFrob(a,b,q)
+function get_traceFrob(a,b,q,K)
 
 	/* We begin by defining the curve C(a,b) and finding the prime ideal of OK lying over q. */
 	
+	OK := RingOfIntegers(K);
+	RK := PolynomialRing(K);
 	_<z> := PolynomialRing(K);
 	Cab := HyperellipticCurve(z^5 - 25*b*z^3 + 125*b^2*z - 250*a);
 	qIdeal := Factorization(q*OK)[1,1];
@@ -129,7 +101,7 @@ end function;
 **         not be proved is displayed on the screen.
 ******************************************************/
 
-function elimination_step_J(decomp, primes, filename : bdiv3 := false)
+function elimination_step_J(decomp, primes, filename)
 
 	/* We define a boolean variable stating whether the elimination step has been 
    	   carried out successfully. By default, we set it to true.                 */
@@ -139,6 +111,8 @@ function elimination_step_J(decomp, primes, filename : bdiv3 := false)
 
 	/* We apply the elimination step to each of the modular forms given in 
 	   the decomp variable. */
+
+	problematic_newforms := [];
 	
 	for i:=1 to #decomp do
 
@@ -147,6 +121,8 @@ function elimination_step_J(decomp, primes, filename : bdiv3 := false)
 		
 		decompf := decomp[i];
 		newf := Eigenform(decompf);
+		K := BaseField(decompf);
+		OK := RingOfIntegers(K);
 		L := HeckeEigenvalueField(decompf);
 	
 		/* We define M to be the compositum field of K and L, and consider
@@ -184,14 +160,14 @@ function elimination_step_J(decomp, primes, filename : bdiv3 := false)
 			/* CASE 1: If q is 3 and 3 | b, we know that b = 0 (mod 3) and we 
 			           may use this additional information. */
 			
-			if q eq 3 and bdiv3 eq true then
+			if q eq 3 then
 				
 				b := 0;
 				/* We need to consider the case where b = 0 (mod 3). By coprimality,
 				   then a = 1,2 (mod 3). */
 				
 				for a in [1, 2] do
-					traceFrob := get_traceFrob(a,b,q);
+					traceFrob := get_traceFrob(a,b,q,K);
 					
 					/* First case: only one trace of Frobenius. We compute the norm of tr(Frob)-aq, which 
                        			   will be added to the product. */
@@ -238,7 +214,7 @@ function elimination_step_J(decomp, primes, filename : bdiv3 := false)
 			
 								/* We proceed to compute all possible traces of Frobenius. */
 								
-								traceFrob := get_traceFrob(a,b,q);
+								traceFrob := get_traceFrob(a,b,q,K);
 																
 								if #traceFrob eq 1 then
 									/* First subcase: only one trace of Frobenius. We compute 
@@ -299,7 +275,10 @@ function elimination_step_J(decomp, primes, filename : bdiv3 := false)
 			message := Sprintf("i = %o of %o, small exponents after elimination = %o\n",i,#decomp,PrimeFactors(bound));
 			PrintFile(filename, message);
 			printf "i = %o of %o, small exponents after elimination = %o\n",i,#decomp,PrimeFactors(bound);
-					
+			
+			if Max(PrimeFactors(bound)) ge 7 then
+				Append(~problematic_newforms, decompf);
+			end if;		
 		else
 			/* If the bound is zero, the elimination step has been unsuccessful. */
 
@@ -311,7 +290,7 @@ function elimination_step_J(decomp, primes, filename : bdiv3 := false)
 	end for;
 
 	/* We return the boolean value determining whether the elimination step has been successful or not. */
-	return successful;
+	return problematic_newforms;
 
 end function;
 
