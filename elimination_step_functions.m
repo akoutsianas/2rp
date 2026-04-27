@@ -276,7 +276,7 @@ function elimination_step_J(decomp, primes, filename)
 			PrintFile(filename, message);
 			printf "i = %o of %o, small exponents after elimination = %o\n",i,#decomp,PrimeFactors(bound);
 			
-			if Max(PrimeFactors(bound)) ge 7 then
+			if #PrimeFactors(bound) gt 0 and Max(PrimeFactors(bound)) ge 7 then
 				Append(~problematic_newforms, decompf);
 			end if;		
 		else
